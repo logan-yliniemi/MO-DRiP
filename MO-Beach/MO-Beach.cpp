@@ -1,7 +1,7 @@
 #include <cstdlib>
 #include <math.h>
 #include <time.h>
-
+#include <string.h>
 #include <stdio.h>
 #include <iostream>
 using namespace std;
@@ -35,6 +35,10 @@ double L1MAX;
 double L2MAX;
 
 #include "QLearner.h"
+#include "data_to_plot.h"
+class statistics_library;
+
+
 
 bool pretty_print = true;
 
@@ -390,11 +394,11 @@ void report(FILE* pFILE, double global) { /// report to text file
 
 int main() {
     srand(time(NULL));    
-    
+    char filename[200];
     FILE* pFILE;
     FILE* pFILE2;
-
-    for(int method=0; method < 5; method++)
+    statistics_library m;
+    for(int method=0; method < 1; method++)
     {
         if(method==0)
         {
@@ -407,6 +411,7 @@ int main() {
             command_global_PBRS_hand = false;
             command_difference_PBRS_hand = false;
             command_local = false;
+            strcpy(filename,"global.txt");
         }
         if(method==1)
         {
@@ -419,6 +424,7 @@ int main() {
             command_global_PBRS_hand = false;
             command_difference_PBRS_hand = false;
             command_local = false;
+            strcpy(filename,"difference.txt");
         }
         if(method==2){
             cout << "HERE BEGINS GLOBAL + PBRS (AUTO) REWARDS" << endl;
@@ -430,6 +436,7 @@ int main() {
             command_global_PBRS_hand = false;
             command_difference_PBRS_hand = false;
             command_local = false;
+            strcpy(filename,"global_PBRS_gzmi.txt");
         }
         if(method==3){
             cout << "HERE BEGINS GLOBAL + PBRS (HAND) REWARDS" << endl;
@@ -441,6 +448,7 @@ int main() {
             command_global_PBRS_hand = true;
             command_difference_PBRS_hand = false;
             command_local = false;
+            strcpy(filename,"global_PBRS_hand.txt");
         }
         if(method==4){
             cout << "HERE BEGINS DIFFERENCE + PBRS (HAND) REWARDS" << endl;
@@ -452,6 +460,7 @@ int main() {
             command_global_PBRS_hand = false;
             command_difference_PBRS_hand = true;
             command_local = false;
+            strcpy(filename,"difference_pbrs_hand.txt");
         }
         if(method==5){
             cout << "HERE BEGINS LOCAL REWARDS" << endl;
@@ -463,6 +472,7 @@ int main() {
             command_global_PBRS_hand = false;
             command_difference_PBRS_hand = false;
             command_local = true;
+            strcpy(filename,"local.txt");
         }
 
         
@@ -515,6 +525,8 @@ int main() {
                if (pretty_print) {
                    report(pFILE, pE->global); // Report every result
                    report(pFILE2, pE->family_global); // Report every result
+                   m.take_value(pE->global);
+                   
                } else {
                    //For Coarse Results
                    if (episode % (EPISODES / 1000) == 0) {
@@ -552,11 +564,15 @@ int main() {
 
             cout << endl << "Lane attendance:" << endl;
             pE->console_attendance();       //Print final behaviour
-            cout << endl << "Final performance = " << pE->global << endl << endl;     //Final global reward  
+            cout << endl << "Final performance = " << pE->global << endl << endl;     //Final global reward
+          
+            
         }
         fclose(pFILE);
         fclose(pFILE2);
+        m.carriage_return();
     }
+        m.run_stats_library(filename);
     return 0;
 }
 
