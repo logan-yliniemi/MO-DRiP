@@ -12,12 +12,12 @@ using namespace std;
 #endif
 
 #define STAT_RUNS 30
-#define EPISODES 1000
-#define STEPS 10
-#define NUM_AGENTS 700
-#define BEACHES 10
-#define CAPACITY 15
-#define FAMILY_CAPACITY 35
+#define EPISODES 10000
+#define STEPS 1
+#define NUM_AGENTS 100
+#define BEACHES 5
+#define CAPACITY 7
+#define FAMILY_CAPACITY 7
 #define ACTIONS 3
 
 #define LYRAND (double)rand()/RAND_MAX
@@ -34,11 +34,13 @@ double G2MAX;
 double L1MAX;
 double L2MAX;
 
+
 #include "QLearner.h"
 #include "data_to_plot.h"
 class statistics_library;
 
-
+int moves;
+double reward;
 
 bool pretty_print = true;
 
@@ -73,6 +75,7 @@ public:
     
     void evaluate();
     void console_attendance();
+    void agents_evaluate(int);
 
     vector<int> attendance;
     vector<double> sect_local;
@@ -81,7 +84,42 @@ public:
     vector<double> sect_family_difference;
     double global;
     double family_global;
+    
+    vector<double> sect_reward_local;
+    vector<double> sect_reward_difference;
+    vector<double> sect_reward_family_local;
+    vector<double> sect_reward_family_difference;
+    
+    
+    
+
 };
+
+void beach::agents_evaluate(int reward){
+    
+    if(reward==0){
+        pA->at(agent).sect_reward_local.push_back(-1.0);
+        pA->at(agent).sect_reward_difference.push_back(-1.0);
+        pA->at(agent).sect_reward_family_local.push_back(-1.0);
+        pA->at(agent).sect_reward_family_difference.push_back(-1.0);
+    }
+    
+    if(reward==1){
+        pA->at(agent).sect_reward_local.push_back(-1.0);
+        pA->at(agent).sect_reward_difference.push_back(-1.0);
+        pA->at(agent).sect_reward_family_local.push_back(-1.0);
+        pA->at(agent).sect_reward_family_difference.push_back(-1.0);
+    }
+    
+    if(reward==2){
+        pA->at(agent).sect_reward_local.push_back(-1.0);
+        pA->at(agent).sect_reward_difference.push_back(-1.0);
+        pA->at(agent).sect_reward_family_local.push_back(-1.0);
+        pA->at(agent).sect_reward_family_difference.push_back(-1.0);
+    }
+
+    
+}
 
 void beach::console_attendance() /// Put attendance values out to console.
 {
@@ -201,6 +239,7 @@ void decide(vector<QLearner>* pA) { ///agents decide which day they are attendin
 void act(vector<QLearner>* pA, beach* pE) { /// agents attend, beach grabs attendance
     int chosen_agent = LYRAND*NUM_AGENTS; //Choose a random agent
     pA->at(chosen_agent).randomise_learnability_action();
+    
 
     
     for (int agent = 0; agent < NUM_AGENTS; agent++) {
@@ -210,6 +249,7 @@ void act(vector<QLearner>* pA, beach* pE) { /// agents attend, beach grabs atten
             pA->at(agent).state = 0;
         } else if (pA->at(agent).state >= BEACHES) {
             pA->at(agent).state = BEACHES-1;
+
         }
         
         //Calculate next noise state
@@ -235,6 +275,10 @@ void act(vector<QLearner>* pA, beach* pE) { /// agents attend, beach grabs atten
         } else if (pA->at(agent).signal_state >= BEACHES) {
             pA->at(agent).signal_state = BEACHES-1;
         }
+        
+        //Stores movement for each agent
+        moves=pA->at(agent).action;
+        pA->at(agent).movement.push_back(moves);
     }
     
     pE->start();
@@ -248,10 +292,11 @@ void react(vector<QLearner>* pA, beach* pE) { /// reward calculations, Q updates
     int num_assigned_to=0;
     
     for (int agent = 0; agent < NUM_AGENTS; agent++) {
-        double L1,L2;
-        double G1,G2;
-        double D1,D2;
-        double GZMI1,GZMI2;
+        double L1,L2,L3;
+        double G1,G2,G3;
+        double D1,D2,D3;
+        double GZMI1,GZMI2,GZMI3;
+        
 
         L1 = pE->sect_local.at(pA->at(agent).state);
         G1 = pE->global;
@@ -260,9 +305,20 @@ void react(vector<QLearner>* pA, beach* pE) { /// reward calculations, Q updates
         L2 = pE->sect_family_local.at(pA->at(agent).state);
         G2 = pE->family_global;
         D2 = pE->sect_family_difference.at(pA->at(agent).state);
+        
+        L3 = pE->sect_reward_family_difference.at(pA->at(agent).state);
+        
+        
+        
+        //L3,G3,D3
 
         GZMI1 = G1 - D1; /// TODO THIS IS A HACK
         GZMI2 = G2 - D2;
+        
+        bool PBRS_SPREAD = false;
+        bool PBRS_OVERCROWD_ONE = true;
+        bool PBRS_MIDDLE = false;
+        bool PBRS_OVERCROWD_ALL = false;
         
         if(command_difference_PBRS_hand || command_global_PBRS_hand)
         {
@@ -286,26 +342,32 @@ void react(vector<QLearner>* pA, beach* pE) { /// reward calculations, Q updates
             int encouraged_state = bta;
             
             
-            //Encourage even spread
-//            int encouraged_state = 2; //All agents to the middle beach except... 
-//            if (0 <= agent && agent < NUM_AGENTS/5) {encouraged_state = 0;}
-//            else if (NUM_AGENTS/5 <= agent && agent <  2*NUM_AGENTS/5) {encouraged_state = 1;}
-//            else if (3* NUM_AGENTS/5 <= agent && agent < 4* NUM_AGENTS/5) {encouraged_state = 3;}
-//            else if (4* NUM_AGENTS/5 <= agent && agent < NUM_AGENTS) {encouraged_state = 4;}
             
+            if(PBRS_SPREAD == true){
+            //Encourage even spread
+            int encouraged_state = 2; //All agents to the middle beach except...
+            if (0 <= agent && agent < NUM_AGENTS/5) {encouraged_state = 0;}
+            else if (NUM_AGENTS/5 <= agent && agent <  2*NUM_AGENTS/5) {encouraged_state = 1;}
+            else if (3* NUM_AGENTS/5 <= agent && agent < 4* NUM_AGENTS/5) {encouraged_state = 3;}
+            else if (4* NUM_AGENTS/5 <= agent && agent < NUM_AGENTS) {encouraged_state = 4;}
+            }
+           
             //Encourage staying still
 //            int encouraged_state = 3; 
 //            if (0 <= agent && agent < NUM_AGENTS/2) {encouraged_state = 1;}
             
+            if(PBRS_MIDDLE == true){
             //Encourage everyone to super beach
-            //int encouraged_state = 2; //All agents to the middle beach 
-            
+            int encouraged_state = 2; //All agents to the middle beach
+             
             //Debug message
             //cout << "Agent " << agent << " encouraged to go on day " << encouraged_state << endl; 
-
-            //For potential gradient 
+            }
+        
+            //For potential gradient
             pA->at(agent).previousPhi = (BEACHES - abs(pA->at(agent).previousState - encouraged_state))*100;
             pA->at(agent).currentPhi = (BEACHES - abs(pA->at(agent).state - encouraged_state))*100;
+        }
 
             //For discrete potential
 //            if (pA->at(agent).previousState == encouraged_state){   //For setting initial state potential
@@ -319,6 +381,7 @@ void react(vector<QLearner>* pA, beach* pE) { /// reward calculations, Q updates
 //                pA->at(agent).currentPhi = 0;
 //            }
             
+            //REALLY BAD THING!!!!!!!!!!! (NEGATIVE POTENTIALS)
             //Dynamic Manual Negative If attendance is between CAPACITY and 2*CAPACITY
 //            int attendanceAtCurrentState = pE->attendance.at(pA->at(agent).state);
 //            if (CAPACITY < attendanceAtCurrentState && attendanceAtCurrentState < 2*CAPACITY) {
@@ -328,22 +391,27 @@ void react(vector<QLearner>* pA, beach* pE) { /// reward calculations, Q updates
 //            }
             
             //Dynamic Manual Positive If attendance is NOT between CAPACITY and 2*CAPACITY
-//            int attendanceAtCurrentState = pE->attendance.at(pA->at(agent).state);
-//            if (CAPACITY < attendanceAtCurrentState && attendanceAtCurrentState < 2*CAPACITY) {
-//                pA->at(agent).currentPhi = 0;
-//            } else {
-//                pA->at(agent).currentPhi = 10;
-//            }
-            
+            if(PBRS_OVERCROWD_ONE==true){
+           int attendanceAtCurrentState = pE->attendance.at(pA->at(agent).state);
+           if (CAPACITY < attendanceAtCurrentState && attendanceAtCurrentState < 2*CAPACITY) {
+               pA->at(agent).currentPhi = 0;
+           } else {
+                pA->at(agent).currentPhi = 10;
+           }
+            }
+        
             //Dynamic Manual encourage attendance is between CAPACITY and 2*CAPACITY
-            //int attendanceAtCurrentState = pE->attendance.at(pA->at(agent).state);
-            //if (CAPACITY < attendanceAtCurrentState && attendanceAtCurrentState < 2*CAPACITY) {
-            //    pA->at(agent).currentPhi = 10;
-            //} else {
-            //    pA->at(agent).currentPhi = 0;
-            //}
-        }
-                       
+            if(PBRS_OVERCROWD_ALL==true){
+            int attendanceAtCurrentState = pE->attendance.at(pA->at(agent).state);
+            if (CAPACITY < attendanceAtCurrentState && attendanceAtCurrentState < 2*CAPACITY) {
+                pA->at(agent).currentPhi = 10;
+            } else {
+                pA->at(agent).currentPhi = 0;
+            }
+            }
+        
+    
+    
         //Automated multi-agent potential function        
         if(command_global_PBRS_gzmi){
             pA->at(agent).currentPhi = GZMI1;   //Potential-based difference reward
@@ -354,13 +422,16 @@ void react(vector<QLearner>* pA, beach* pE) { /// reward calculations, Q updates
         double shapedReward=0;
         if(command_global_PBRS_gzmi || command_global_PBRS_hand)
         {
-            shapedReward = MO_Combine(normalize(G1,0,G1MAX),normalize(G2,0,G2MAX),0.5) + PBRS;
+            shapedReward = MO_Combine(normalize(G1,0,G1MAX),normalize(G2,0,G2MAX),1) + PBRS;
         }
         if(command_difference_PBRS_hand)
         {
-            shapedReward = MO_Combine(normalize(D1,D1MIN,D1MAX),normalize(D2,D2MIN,D2MAX),0.5) + PBRS;
+            shapedReward = MO_Combine(normalize(D1,D1MIN,D1MAX),normalize(D2,D2MIN,D2MAX),1) + PBRS;
         }
-        
+    
+    
+    
+    
 //        //Debug output for PBRS
 //        if (agent == 20 
 //            //&& pA->at(agent).currentPhi != pA->at(agent).previousPhi
@@ -371,10 +442,10 @@ void react(vector<QLearner>* pA, beach* pE) { /// reward calculations, Q updates
 //            cout << PBRS << "Equals " << pA->at(agent).gamma << " * " << pA->at(agent).currentPhi << " - " << pA->at(agent).previousPhi << endl;
 //        }
 
-        pA->at(agent).set_local(MO_Combine(normalize(L1,0,L1MAX),normalize(L2,0,L2MAX),0.5));
-        pA->at(agent).set_global(MO_Combine(normalize(G1,0,G1MAX),normalize(G2,0,G2MAX),0.5));
-        pA->at(agent).set_difference(MO_Combine(normalize(D1,D1MIN,D1MAX),normalize(D2,D2MIN,D2MAX),0.5));
-        pA->at(agent).set_gzmi(MO_Combine(normalize(GZMI1,0,L1MAX),normalize(GZMI2,0,L2MAX),0.5));
+        pA->at(agent).set_local(MO_Combine(normalize(L1,0,L1MAX),normalize(L2,0,L2MAX),1));
+        pA->at(agent).set_global(MO_Combine(normalize(G1,0,G1MAX),normalize(G2,0,G2MAX),1));
+        pA->at(agent).set_difference(MO_Combine(normalize(D1,D1MIN,D1MAX),normalize(D2,D2MIN,D2MAX),1));
+        pA->at(agent).set_gzmi(MO_Combine(normalize(GZMI1,0,L1MAX),normalize(GZMI2,0,L2MAX),1));
         pA->at(agent).set_shaped_reward(shapedReward);
 
         if(command_local){pA->at(agent).learn_with_local();}
@@ -384,9 +455,21 @@ void react(vector<QLearner>* pA, beach* pE) { /// reward calculations, Q updates
         {pA->at(agent).learn_with_shaped_reward();}
         
         
-        pA->at(agent).Qupdate();  
+        pA->at(agent).Qupdate();
+    
+        //Stores reward values for each agent
+        reward=pA->at(agent).action;
+        pA->at(agent).rewards.push_back(reward);
+        
+        
+        
+        
+        
     }
-}
+    
+
+    }
+
 
 void report(FILE* pFILE, double global) { /// report to text file
     fprintf(pFILE, "%.5f\t", global);
@@ -398,7 +481,8 @@ int main() {
     FILE* pFILE;
     FILE* pFILE2;
     statistics_library m;
-    for(int method=0; method < 1; method++)
+    for(int method=0; method < 6; method++)
+        
     {
         if(method==0)
         {
@@ -411,7 +495,7 @@ int main() {
             command_global_PBRS_hand = false;
             command_difference_PBRS_hand = false;
             command_local = false;
-            strcpy(filename,"global.txt");
+            strcpy(filename,"global_stat.txt");
         }
         if(method==1)
         {
@@ -424,7 +508,7 @@ int main() {
             command_global_PBRS_hand = false;
             command_difference_PBRS_hand = false;
             command_local = false;
-            strcpy(filename,"difference.txt");
+            strcpy(filename,"difference_stat.txt");
         }
         if(method==2){
             cout << "HERE BEGINS GLOBAL + PBRS (AUTO) REWARDS" << endl;
@@ -436,7 +520,7 @@ int main() {
             command_global_PBRS_hand = false;
             command_difference_PBRS_hand = false;
             command_local = false;
-            strcpy(filename,"global_PBRS_gzmi.txt");
+            strcpy(filename,"global_PBRS_gzmi_stat.txt");
         }
         if(method==3){
             cout << "HERE BEGINS GLOBAL + PBRS (HAND) REWARDS" << endl;
@@ -448,7 +532,7 @@ int main() {
             command_global_PBRS_hand = true;
             command_difference_PBRS_hand = false;
             command_local = false;
-            strcpy(filename,"global_PBRS_hand.txt");
+            strcpy(filename,"global_PBRS_hand_stat.txt");
         }
         if(method==4){
             cout << "HERE BEGINS DIFFERENCE + PBRS (HAND) REWARDS" << endl;
@@ -460,7 +544,7 @@ int main() {
             command_global_PBRS_hand = false;
             command_difference_PBRS_hand = true;
             command_local = false;
-            strcpy(filename,"difference_pbrs_hand.txt");
+            strcpy(filename,"difference_pbrs_hand_stat.txt");
         }
         if(method==5){
             cout << "HERE BEGINS LOCAL REWARDS" << endl;
@@ -472,7 +556,7 @@ int main() {
             command_global_PBRS_hand = false;
             command_difference_PBRS_hand = false;
             command_local = true;
-            strcpy(filename,"local.txt");
+            strcpy(filename,"local_stat.txt");
         }
 
         
@@ -491,6 +575,7 @@ int main() {
                 Q.id = i;
                 Q.start();
                 pA->push_back(Q);
+                
             }
 
             for (int episode = 0; episode < EPISODES; episode++){
@@ -567,12 +652,14 @@ int main() {
             cout << endl << "Final performance = " << pE->global << endl << endl;     //Final global reward
           
             
+        
+        m.carriage_return();
         }
         fclose(pFILE);
         fclose(pFILE2);
-        m.carriage_return();
-    }
-        m.run_stats_library(filename);
+        
+    m.run_stats_library(filename);}
+    
     return 0;
 }
 

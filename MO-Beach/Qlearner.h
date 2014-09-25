@@ -25,6 +25,8 @@ class QLearner {
     void set_initial_state();
     void show_action();
     
+   
+    
 
     double Initial_Q_Value;
 
@@ -62,12 +64,20 @@ public:
     void learn_with_shaped_reward();
     void decay_epsilon();
     void decay_alpha();
+    
+    vector<int> movement;
+    vector<double> rewards;
+    vector<double> sect_reward_local;
+    vector<double> sect_reward_difference;
+    vector<double> sect_reward_family_local;
+    vector<double> sect_reward_family_difference;
 };
 
 void QLearner::decay_epsilon()
 {
-    epsilon_counter++;
-    epsilon=1.0/epsilon_counter;
+    //epsilon_counter++;
+    //epsilon=1.0/epsilon_counter;
+    epsilon = epsilon * 0.9999;
 }
 void QLearner::decay_alpha()
 {
@@ -96,7 +106,7 @@ void QLearner::start() {
     learnability_action = 0;
     alpha = 0.05;
     epsilon_counter=0;
-    epsilon = 1;
+    epsilon = .05;
     gamma = 0.9;
     Initial_Q_Value = -1;
     learning_signal = 0;
