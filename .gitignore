@@ -19,3 +19,15 @@
 *.exe
 *.out
 *.app
+
+*.pbxproj
+
+*.xcworkspacedata
+
+*.xcuserstate
+
+*.xcscheme
+
+*.plist
+
+*.1
