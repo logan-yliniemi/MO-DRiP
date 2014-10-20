@@ -8,7 +8,6 @@
 #endif
 
 class QLearner {
-    
     double learning_signal; /// The value used to update the Q table. G, L, or D are assigned to this value.
 
     double global_reward;
@@ -29,9 +28,16 @@ class QLearner {
     double Initial_Q_Value;
 
 public:
+    /// AGENT DOMAIN SPECIFIC:
+    double instant_local_moves;
+    double instant_global_moves;
+    double total_local_moves;
+    double total_global_moves;
+    
+    /// AGENT GENERIC:
     void console_2vector(vector<vector<double> >);
     vector< vector<double> > Qtable;
-    int id;
+    int id_num;
     int previousState;
     int state;
     int noise_state;
@@ -46,6 +52,7 @@ public:
     double previousPhi;
     void start();       //Used before first run of a statistical run / repeat
     void restart();     //Used at start of episode (i.e. does not change Qtable or learning parameters)
+    void timestep_restart();
     void Qupdate();
     void final_Qupdate();
     void choose_egreedy_action();
@@ -78,15 +85,25 @@ void QLearner::set_initial_state()
 {
     //state = id % BEACHES; //uniform initial distribution
     
-    // Initialise states - NOTE: This version is specific to 5 lanes
-    if (id < NUM_AGENTS / 2) {
+    // Initialise states - NOTE: This version is specific to 5 sections
+    /*
+    if (id_num < NUM_AGENTS / 2) {
         state = 1;
     } else {
         state = 3;
     }
+     */
+    
+    /// All same initial distribution
+    state = BEACHES/2;
 }
 
 void QLearner::start() {
+    total_global_moves = 0;
+    total_local_moves = 0;
+    instant_local_moves = 0;
+    instant_global_moves = 0;
+    
     previousState = 0;
     set_initial_state();
    
@@ -122,6 +139,9 @@ void QLearner::start() {
 void QLearner::restart() {
     previousState = 0;
     set_initial_state();
+    
+    total_global_moves = 0;
+    total_local_moves = 0;
    
     noise_state = 0; //Todo: update if calculating learnability? 
     signal_state = 0; //TODO: Same as above, should these just equal state?
@@ -137,6 +157,18 @@ void QLearner::restart() {
 
     currentPhi = 0.0;
     previousPhi = 0.0;
+}
+
+void QLearner::timestep_restart(){
+    instant_local_moves=0;
+    instant_global_moves=0;
+    
+    learning_signal = 0;
+    global_reward = 0;
+    local_reward = 0;
+    difference_reward = 0;
+    gzmi = 0;
+    shaped_reward = 0;
 }
 
 void QLearner::initial_Qtable() { 
