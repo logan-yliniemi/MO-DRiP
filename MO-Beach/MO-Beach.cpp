@@ -296,6 +296,8 @@ void react(vector<QLearner>* pA, beach* pE) { /// reward calculations, Q updates
         
         if(command_difference_PBRS_hand || command_global_PBRS_hand)
         {
+            pA->at(agent).currentPhi = 0; /// previousPhi updated from last timestep's Qupdate();
+            
             //Manual heuristic encouraging agents maximise capacity on all but one beach 
             // TODO: Generalise - this version is specific to 5 beaches
             //int num_excess_agents = NUM_AGENTS-(CAPACITY*(BEACHES-1));
@@ -334,54 +336,53 @@ void react(vector<QLearner>* pA, beach* pE) { /// reward calculations, Q updates
             //cout << "Agent " << agent << " encouraged to go on day " << encouraged_state << endl; 
 
             //For potential gradient 
-            pA->at(agent).previousPhi = (BEACHES - abs(pA->at(agent).previousState - encouraged_state))*100;
-            pA->at(agent).currentPhi = (BEACHES - abs(pA->at(agent).state - encouraged_state))*100;
+            pA->at(agent).currentPhi += (BEACHES - abs(pA->at(agent).state - encouraged_state))*100;
 
             //For discrete potential
 //            if (pA->at(agent).previousState == encouraged_state){   //For setting initial state potential
-//                pA->at(agent).previousPhi = 10;                   //Works ok in theory as this is a static potential function
+//                pA->at(agent).previousPhi += 10;                   //Works ok in theory as this is a static potential function
 //            } else {
-//                pA->at(agent).previousPhi = 0;
+//                pA->at(agent).previousPhi += 0;
 //            }         
 //            if (pA->at(agent).state == encouraged_state){
-//                pA->at(agent).currentPhi = 10;        
+//                pA->at(agent).currentPhi += 10;
 //            } else {
-//                pA->at(agent).currentPhi = 0;
+//                pA->at(agent).currentPhi += 0;
 //            }
             
             //Dynamic Manual Negative If attendance is between CAPACITY and 2*CAPACITY
 //            int attendanceAtCurrentState = pE->attendance.at(pA->at(agent).state);
 //            if (CAPACITY < attendanceAtCurrentState && attendanceAtCurrentState < 2*CAPACITY) {
-//                pA->at(agent).currentPhi = -10;
+//                pA->at(agent).currentPhi += -10;
 //            } else {
-//                pA->at(agent).currentPhi = 0;
+//                pA->at(agent).currentPhi += 0;
 //            }
             
             //Dynamic Manual Positive If attendance is NOT between CAPACITY and 2*CAPACITY
 //            int attendanceAtCurrentState = pE->attendance.at(pA->at(agent).state);
 //            if (CAPACITY < attendanceAtCurrentState && attendanceAtCurrentState < 2*CAPACITY) {
-//                pA->at(agent).currentPhi = 0;
+//                pA->at(agent).currentPhi += 0;
 //            } else {
-//                pA->at(agent).currentPhi = 10;
+//                pA->at(agent).currentPhi += 10;
 //            }
             
             //Dynamic Manual encourage attendance is between CAPACITY and 2*CAPACITY
             //int attendanceAtCurrentState = pE->attendance.at(pA->at(agent).state);
             //if (CAPACITY < attendanceAtCurrentState && attendanceAtCurrentState < 2*CAPACITY) {
-            //    pA->at(agent).currentPhi = 10;
+            //    pA->at(agent).currentPhi += 10;
             //} else {
-            //    pA->at(agent).currentPhi = 0;
+            //    pA->at(agent).currentPhi += 0;
             //}
             
             /// BGN Oct2014 segment
             /// To encourage movement
             /*if(pA->at(agent).previousState == pA->at(agent).state){
                 // If agent stays still, no potential.
-                pA->at(agent).currentPhi = 10;
+                pA->at(agent).currentPhi += 10;
             }
             if(pA->at(agent).previousState != pA->at(agent).state){
                 // If agent moves, potential.
-                pA->at(agent).currentPhi = 0;
+                pA->at(agent).currentPhi += 0;
             }
             */
              
@@ -389,11 +390,11 @@ void react(vector<QLearner>* pA, beach* pE) { /// reward calculations, Q updates
           
              /*if(pA->at(agent).previousState == pA->at(agent).state){
              // If agent stays still, potential.
-             pA->at(agent).currentPhi = 10;
+             pA->at(agent).currentPhi += 10;
              }
              if(pA->at(agent).previousState != pA->at(agent).state){
              // If agent moves, no potential.
-             pA->at(agent).currentPhi = 0;
+             pA->at(agent).currentPhi += 0;
              }
           */
             
