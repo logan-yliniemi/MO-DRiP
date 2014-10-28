@@ -11,8 +11,8 @@ using namespace std;
 #include <vector>
 #endif
 
-#define STAT_RUNS 5
-#define EPISODES 1000
+#define STAT_RUNS 30
+#define EPISODES 5000
 #define STEPS 10
 #define NUM_AGENTS 100
 #define BEACHES 5
@@ -306,7 +306,7 @@ void react(vector<QLearner>* pA, beach* pE) { /// reward calculations, Q updates
             //else if (CAPACITY + NUM_AGENTS/2 <= agent && agent < CAPACITY * 2 + NUM_AGENTS/2) {encouraged_state = 4;}
             
             //Manual heuristic for MOB problem, generalized to BEACHES sections.
-            int num_excess_agents = NUM_AGENTS - (CAPACITY*(BEACHES-1));
+            /*int num_excess_agents = NUM_AGENTS - (CAPACITY*(BEACHES-1));
             num_assigned_to++;
             if(num_assigned_to == CAPACITY -1){
                 num_assigned_to=0;
@@ -314,28 +314,28 @@ void react(vector<QLearner>* pA, beach* pE) { /// reward calculations, Q updates
             }
             if(bta >= BEACHES){bta = BEACHES-1;}
             int encouraged_state = bta;
-            
+            */
             
             //Encourage even spread
-//            int encouraged_state = 2; //All agents to the middle beach except... 
-//            if (0 <= agent && agent < NUM_AGENTS/5) {encouraged_state = 0;}
-//            else if (NUM_AGENTS/5 <= agent && agent <  2*NUM_AGENTS/5) {encouraged_state = 1;}
-//            else if (3* NUM_AGENTS/5 <= agent && agent < 4* NUM_AGENTS/5) {encouraged_state = 3;}
-//            else if (4* NUM_AGENTS/5 <= agent && agent < NUM_AGENTS) {encouraged_state = 4;}
+          int encouraged_state = 2; //All agents to the middle beach except...
+           if (0 <= agent && agent < NUM_AGENTS/5) {encouraged_state = 0;}
+           else if (NUM_AGENTS/5 <= agent && agent <  2*NUM_AGENTS/5) {encouraged_state = 1;}
+           else if (3* NUM_AGENTS/5 <= agent && agent < 4* NUM_AGENTS/5) {encouraged_state = 3;}
+           else if (4* NUM_AGENTS/5 <= agent && agent < NUM_AGENTS) {encouraged_state = 4;}
             
             //Encourage staying still
 //            int encouraged_state = 3; 
 //            if (0 <= agent && agent < NUM_AGENTS/2) {encouraged_state = 1;}
             
             //Encourage everyone to super beach
-            //int encouraged_state = 2; //All agents to the middle beach 
+            //int encouraged_state = 2; //All agents to the middle beach
             
             //Debug message
             //cout << "Agent " << agent << " encouraged to go on day " << encouraged_state << endl; 
 
             //For potential gradient 
-            //pA->at(agent).previousPhi = (BEACHES - abs(pA->at(agent).previousState - encouraged_state))*100;
-            //pA->at(agent).currentPhi = (BEACHES - abs(pA->at(agent).state - encouraged_state))*100;
+            pA->at(agent).previousPhi = (BEACHES - abs(pA->at(agent).previousState - encouraged_state))*100;
+            pA->at(agent).currentPhi = (BEACHES - abs(pA->at(agent).state - encouraged_state))*100;
 
             //For discrete potential
 //            if (pA->at(agent).previousState == encouraged_state){   //For setting initial state potential
@@ -375,7 +375,7 @@ void react(vector<QLearner>* pA, beach* pE) { /// reward calculations, Q updates
             
             /// BGN Oct2014 segment
             /// To encourage movement
-            if(pA->at(agent).previousState == pA->at(agent).state){
+            /*if(pA->at(agent).previousState == pA->at(agent).state){
                 // If agent stays still, no potential.
                 pA->at(agent).currentPhi = 10;
             }
@@ -383,10 +383,11 @@ void react(vector<QLearner>* pA, beach* pE) { /// reward calculations, Q updates
                 // If agent moves, potential.
                 pA->at(agent).currentPhi = 0;
             }
-            
+            */
+             
             /// To discourage movement
-            /*
-             if(pA->at(agent).previousState == pA->at(agent).state){
+          
+             /*if(pA->at(agent).previousState == pA->at(agent).state){
              // If agent stays still, potential.
              pA->at(agent).currentPhi = 10;
              }
@@ -394,7 +395,7 @@ void react(vector<QLearner>* pA, beach* pE) { /// reward calculations, Q updates
              // If agent moves, no potential.
              pA->at(agent).currentPhi = 0;
              }
-             */
+          */
             
             /// END Oct2014 segment
             
@@ -639,8 +640,8 @@ int main() {
         }
         fclose(pFILE);
         fclose(pFILE2);
-        m1.run_stats_library(filename1);
-        m2.run_stats_library(filename2);
+        //m1.run_stats_library(filename1);
+        //m2.run_stats_library(filename2);
     }
     return 0;
 }
